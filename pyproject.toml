@@ -1,0 +1,19 @@
+[project]
+name = "blindur"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "azure-cognitiveservices-speech>=1.47.0",
+    "azure-cognitiveservices-vision-computervision>=0.9.1",
+    "azure-cognitiveservices-vision-face>=0.6.1",
+    "flask>=3.1.2",
+    "msrest>=0.7.1",
+    "numpy>=2.4.0",
+    "openai>=2.14.0",
+    "opencv-python>=4.11.0.86",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
+    "ultralytics>=8.3.250",
+]
