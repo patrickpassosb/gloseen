@@ -3,7 +3,7 @@
 #include <WebServer.h>
 
 // ========================================
-// DADOS DO WI-FI (JÁ CONFIGURADOS)
+// WI-FI DATA (ALREADY CONFIGURED)
 // ========================================
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
@@ -11,7 +11,7 @@ const char* password = "YOUR_WIFI_PASSWORD";
 
 WebServer server(80);
 
-// Definição dos pinos para o modelo AI-THINKER ESP32-CAM
+// Pin definition for AI-THINKER ESP32-CAM model
 #define PWDN_GPIO_NUM     32
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM      0
@@ -29,48 +29,48 @@ WebServer server(80);
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
-// --- NOVO: PINO DO FLASH ---
-#define FLASH_GPIO_NUM     4  // O LED forte está no GPIO 4
-// ---------------------------
+// --- FLASH PIN ---
+#define FLASH_GPIO_NUM     4  // The strong LED is on GPIO 4
+// -----------------
 
-// Função que tira a foto e envia para o computador
+// Function to take a photo and send it to the computer
 void handleCapture() {
-  Serial.println("Pedido de foto recebido.");
+  Serial.println("Capture request received.");
 
-  // --- NOVO: LIGA O FLASH ---
-  Serial.println("Ligando Flash...");
+  // --- FLASH ON ---
+  Serial.println("Flash ON...");
   digitalWrite(FLASH_GPIO_NUM, HIGH);
-  // Dá um tempo para a câmera se acostumar com a luz forte
+  // Give the camera some time to adjust to the bright light
   delay(300); 
-  // --------------------------
+  // ----------------
 
-  Serial.println("Capturando...");
+  Serial.println("Capturing...");
   camera_fb_t * fb = NULL;
   
-  // Tira a foto
+  // Take photo
   fb = esp_camera_fb_get();
 
-  // --- NOVO: DESLIGA O FLASH IMEDIATAMENTE ---
+  // --- FLASH OFF IMMEDIATELY ---
   digitalWrite(FLASH_GPIO_NUM, LOW);
-  Serial.println("Flash desligado.");
-  // ------------------------------------------
+  Serial.println("Flash OFF.");
+  // -----------------------------
 
   if (!fb) {
-    Serial.println("Falha na captura da câmera");
-    server.send(500, "text/plain", "Falha na captura");
+    Serial.println("Camera capture failed");
+    server.send(500, "text/plain", "Capture failed");
     return;
   }
-  Serial.printf("Foto capturada! Tamanho: %u bytes\n", fb->len);
+  Serial.printf("Photo captured! Size: %u bytes\n", fb->len);
 
-  // Envia a imagem para o Python
+  // Send image to Python
   server.setContentLength(fb->len);
   server.send(200, "image/jpeg", "");
   WiFiClient client = server.client();
   client.write(fb->buf, fb->len); 
 
-  // LIBERA A MEMÓRIA RAM IMEDIATAMENTE
+  // RELEASE RAM IMMEDIATELY
   esp_camera_fb_return(fb);
-  Serial.println("Foto enviada e memoria liberada.");
+  Serial.println("Photo sent and memory released.");
 }
 
 void setup() {
@@ -78,12 +78,12 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.println();
 
-  // --- NOVO: Configura o pino do flash como saída e garante que começa desligado
+  // --- Flash pin configuration as output and ensure it starts off
   pinMode(FLASH_GPIO_NUM, OUTPUT);
   digitalWrite(FLASH_GPIO_NUM, LOW);
-  // ----------------------------------------------------------------------------
+  // -------------------------------------------------------------
 
-  // Configuração da Câmera
+  // Camera Configuration
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -106,41 +106,41 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
-  // Resolução: FRAMESIZE_SVGA (800x600) é um bom equilíbrio.
+  // Resolution: FRAMESIZE_SVGA (800x600) is a good balance.
   config.frame_size = FRAMESIZE_SVGA; 
-  config.jpeg_quality = 12; // 0-63, menor número = maior qualidade
-  config.fb_count = 1; // Usar apenas 1 framebuffer para economizar RAM
+  config.jpeg_quality = 12; // 0-63, lower number = higher quality
+  config.fb_count = 1; // Use only 1 framebuffer to save RAM
 
-  // Inicializa a câmera
+  // Initialize camera
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
-    Serial.printf("Erro ao iniciar a câmera: 0x%x", err);
+    Serial.printf("Error initializing camera: 0x%x", err);
     return;
   }
 
-  // Conecta ao Wi-Fi
+  // Connect to Wi-Fi
   WiFi.begin(ssid, password);
-  Serial.print("Conectando ao Wi-Fi");
+  Serial.print("Connecting to Wi-Fi");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("");
-  Serial.print("Wi-Fi conectado. IP: ");
+  Serial.print("Wi-Fi connected. IP: ");
   Serial.println(WiFi.localIP());
 
-  // Define a rota que o Python vai chamar
+  // Define route for Python call
   server.on("/capture", HTTP_GET, handleCapture);
   
-  // Inicia o servidor
+  // Start server
   server.begin();
-  Serial.println("Servidor de câmera pronto!");
-  Serial.print("Use este link no Python: http://");
+  Serial.println("Camera server ready!");
+  Serial.print("Use this link in Python: http://");
   Serial.print(WiFi.localIP());
   Serial.println("/capture");
 }
 
 void loop() {
-  // Mantém o servidor atento a pedidos
+  // Keep server alert for requests
   server.handleClient();
 }

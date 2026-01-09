@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Main application for Vision AI Pro
 from flask import Flask, render_template, jsonify, request
 import cv2
 import numpy as np
@@ -12,10 +13,10 @@ import base64
 from datetime import datetime
 from dotenv import load_dotenv
 
-# Carrega variáveis de ambiente do arquivo .env
+# Load environment variables from .env file
 load_dotenv()
 
-# --- IMPORTAÇÕES IAs ---
+# --- IA IMPORTS ---
 from ultralytics import YOLO
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from msrest.authentication import CognitiveServicesCredentials
@@ -31,7 +32,7 @@ def from_json_filter(s):
     except: return []
 
 # ==========================================
-# CONFIGURAÇÕES E CONSTANTES
+# SETTINGS AND CONSTANTS
 # ==========================================
 # Azure Credentials from environment
 AZURE_VISION_ENDPOINT = os.getenv("AZURE_VISION_ENDPOINT")
@@ -45,239 +46,223 @@ AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
 AZURE_SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")
 
 URL_ESP32 = os.getenv("URL_ESP32", "http://192.168.15.9/capture")
-PASTA_TEMP = "static"
-if not os.path.exists(PASTA_TEMP): os.makedirs(PASTA_TEMP)
+TEMP_FOLDER = "static"
+if not os.path.exists(TEMP_FOLDER): os.makedirs(TEMP_FOLDER)
 
-NOME_DB = "vision_memory.db"
-# Nomes de arquivos separados para PT e EN
-NOME_ARQUIVO_AUDIO_PT = "audio_pt.wav"
-NOME_ARQUIVO_AUDIO_EN = "audio_en.wav"
-NOME_ARQUIVO_AUDIO_RESPOSTA = "audio_resposta.wav"
-NOME_ARQUIVO_CUE = "pode_falar.wav"
-NOME_ARQUIVO_ALARME = "alarme.wav"
+DB_NAME = "vision_memory.db"
+# File names for audio
+EN_AUDIO_FILENAME = "audio_en.wav"
+RESPONSE_AUDIO_FILENAME = "audio_response.wav"
+CUE_AUDIO_FILENAME = "can_speak.wav"
+ALARM_AUDIO_FILENAME = "alarm.wav"
 
-CAMINHO_AUDIO_PT = os.path.join(PASTA_TEMP, NOME_ARQUIVO_AUDIO_PT)
-CAMINHO_AUDIO_EN = os.path.join(PASTA_TEMP, NOME_ARQUIVO_AUDIO_EN)
-CAMINHO_AUDIO_RESPOSTA_COMPLETO = os.path.join(PASTA_TEMP, NOME_ARQUIVO_AUDIO_RESPOSTA)
-CAMINHO_AUDIO_CUE_COMPLETO = os.path.join(PASTA_TEMP, NOME_ARQUIVO_CUE)
-CAMINHO_AUDIO_ALARME_COMPLETO = os.path.join(PASTA_TEMP, NOME_ARQUIVO_ALARME)
+EN_AUDIO_PATH = os.path.join(TEMP_FOLDER, EN_AUDIO_FILENAME)
+RESPONSE_AUDIO_PATH = os.path.join(TEMP_FOLDER, RESPONSE_AUDIO_FILENAME)
+CUE_AUDIO_PATH = os.path.join(TEMP_FOLDER, CUE_AUDIO_FILENAME)
+ALARM_AUDIO_PATH = os.path.join(TEMP_FOLDER, ALARM_AUDIO_FILENAME)
 
-# --- VOZES NEURAIS ---
-VOZ_PT = 'pt-BR-FranciscaNeural'
-VOZ_EN = 'en-US-JennyNeural'
+# --- NEURAL VOICES ---
+EN_VOICE = 'en-US-JennyNeural'
 
-# --- LISTA DE PERIGO ---
-PERIGO_IMEDIATO_PT = [
-    'faca', 'tesoura',  'arma', 'fogo', 'incêndio', 'chama', 'explosivo',
-    'fumaça', 'vapor', 'escada', 'degrau', 'quina', 'buraco', 'obstáculo', 'vão', 'desnível'
+# --- DANGER LIST (English) ---
+IMMEDIATE_DANGER_WORDS = [
+    'knife', 'scissors', 'gun', 'fire', 'flame', 'explosive',
+    'smoke', 'vapor', 'stairs', 'step', 'sharp edge', 'hole', 'obstacle', 'gap', 'uneven surface'
 ]
 
+LAST_ANALYSIS_CONTEXT = None
 
-CONTEXTO_ULTIMA_ANALISE = None
-
-print("--- INICIALIZANDO SISTEMA FINAL (PITCH): ÁUDIOS SEPARADOS E ROBUSTOS ---")
+print("--- INITIALIZING VISION AI PRO (EN) ---")
 try:
     computervision_client = ComputerVisionClient(AZURE_VISION_ENDPOINT, CognitiveServicesCredentials(AZURE_VISION_KEY))
     face_client = FaceClient(AZURE_FACE_ENDPOINT, CognitiveServicesCredentials(AZURE_FACE_KEY))
     openai_client = AzureOpenAI(api_key=AZURE_OPENAI_KEY, api_version="2024-02-01", azure_endpoint=AZURE_OPENAI_ENDPOINT)
     model = YOLO('yolov8x.pt')
-    print("Todas as IAs Azure Carregadas.")
-except Exception as e: print(f"Erro IAs Azure: {e}")
+    print("All Azure IAs Loaded.")
+except Exception as e: print(f"Azure IA Error: {e}")
 
-# --- FUNÇÕES DE BANCO DE DADOS ---
-def get_db_connection(): conn = sqlite3.connect(NOME_DB); conn.row_factory = sqlite3.Row; return conn
+# --- DATABASE FUNCTIONS ---
+def get_db_connection(): conn = sqlite3.connect(DB_NAME); conn.row_factory = sqlite3.Row; return conn
 def init_db():
-    with get_db_connection() as conn: conn.execute('''CREATE TABLE IF NOT EXISTS historico (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, data_hora_formated TEXT, imagem_path TEXT, resumo_gpt TEXT, objetos_json TEXT, tem_perigo INTEGER)'''); conn.commit()
+    with get_db_connection() as conn: conn.execute('''CREATE TABLE IF NOT EXISTS history (id INTEGER PRIMARY KEY AUTOINCREMENT, timestamp TEXT, datetime_formatted TEXT, image_path TEXT, gpt_summary TEXT, objects_json TEXT, has_danger INTEGER)'''); conn.commit()
 init_db()
 
-# --- GERADORES DE ÁUDIOS ESTÁTICOS ---
-def gerar_audios_estaticos():
+# --- STATIC AUDIO GENERATORS ---
+def generate_static_audios():
     speech_config = speechsdk.SpeechConfig(subscription=AZURE_SPEECH_KEY, region=AZURE_SPEECH_REGION)
-    speech_config.speech_synthesis_voice_name='pt-BR-AntonioNeural'
-    if not os.path.exists(CAMINHO_AUDIO_CUE_COMPLETO):
+    speech_config.speech_synthesis_voice_name='en-US-GuyNeural' # Changed default voice to EN
+    if not os.path.exists(CUE_AUDIO_PATH):
         try:
-            audio_config = speechsdk.audio.AudioOutputConfig(filename=CAMINHO_AUDIO_CUE_COMPLETO)
+            audio_config = speechsdk.audio.AudioOutputConfig(filename=CUE_AUDIO_PATH)
             synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-            synthesizer.speak_text_async("Pode falar.").get()
+            synthesizer.speak_text_async("You can speak now.").get()
         except: pass
-    if not os.path.exists(CAMINHO_AUDIO_ALARME_COMPLETO):
+    if not os.path.exists(ALARM_AUDIO_PATH):
         try:
-            audio_config = speechsdk.audio.AudioOutputConfig(filename=CAMINHO_AUDIO_ALARME_COMPLETO)
+            audio_config = speechsdk.audio.AudioOutputConfig(filename=ALARM_AUDIO_PATH)
             synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-            synthesizer.speak_text_async("Perigo crítico! Atenção!").get() 
+            synthesizer.speak_text_async("Critical danger! Attention!").get() 
         except: pass
-gerar_audios_estaticos()
+generate_static_audios()
 
-# --- FUNÇÕES AUXILIARES ---
-def limpar_imagens_antigas():
+# --- HELPER FUNCTIONS ---
+def cleanup_old_images():
     try:
-        for arq in glob.glob(os.path.join(PASTA_TEMP, "captura_*.jpg")): os.remove(arq)
-        for arq in glob.glob(os.path.join(PASTA_TEMP, "processada_*.jpg")): os.remove(arq)
+        for arq in glob.glob(os.path.join(TEMP_FOLDER, "capture_*.jpg")): os.remove(arq)
+        for arq in glob.glob(os.path.join(TEMP_FOLDER, "processed_*.jpg")): os.remove(arq)
     except: pass
 
-# --- NOVA FUNÇÃO DE GERAÇÃO DE ÁUDIO SIMPLES E SEGURA ---
-def gerar_audio_neural_simples(texto, voz, arquivo_saida, nome_web):
-    """Gera um arquivo de áudio simples com uma única voz. Muito mais robusto."""
-    if not texto: return None
+# --- NEW SIMPLE AND SECURE AUDIO GENERATION FUNCTION ---
+def generate_simple_neural_audio(text, voice, output_file, web_name):
+    """Generates a simple audio file with a single voice. Much more robust."""
+    if not text: return None
     try:
-        # Remove o arquivo anterior se existir para garantir que não toque áudio velho
-        if os.path.exists(arquivo_saida):
-            try: os.remove(arquivo_saida)
-            except: pass # Ignora erro se o arquivo estiver sendo usado, o Azure sobrescreve
+        # Delete previous file if it exists to ensure no old audio is played
+        if os.path.exists(output_file):
+            try: os.remove(output_file)
+            except: pass # Ignore error if file is in use, Azure will overwrite
 
         speech_config = speechsdk.SpeechConfig(subscription=AZURE_SPEECH_KEY, region=AZURE_SPEECH_REGION)
-        speech_config.speech_synthesis_voice_name = voz
-        audio_config = speechsdk.audio.AudioOutputConfig(filename=arquivo_saida)
+        speech_config.speech_synthesis_voice_name = voice
+        audio_config = speechsdk.audio.AudioOutputConfig(filename=output_file)
         synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
         
-        result = synthesizer.speak_text_async(texto).get()
+        result = synthesizer.speak_text_async(text).get()
         
         if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            # Adiciona timestamp para evitar cache do navegador
-            return f"/static/{nome_web}?t={int(time.time())}_{np.random.randint(0,1000)}"
+            # Add timestamp to avoid browser cache
+            return f"/static/{web_name}?t={int(time.time())}_{np.random.randint(0,1000)}"
         else:
-            print(f"Erro Azure TTS ({voz}): {result.cancellation_details.reason}")
+            print(f"Azure TTS Error ({voice}): {result.cancellation_details.reason}")
             return None
     except Exception as e:
-        print(f"Exceção TTS: {e}")
+        print(f"TTS Exception: {e}")
         return None
 
-# --- GPT-4o VISION (PERIGOS AMBIENTAIS) ---
-def analisar_imagem_com_gpt4o_vision(caminho_imagem):
+# --- GPT-4o VISION (ENVIRONMENTAL HAZARDS) ---
+def analyze_image_with_gpt4o_vision(image_path):
     try:
-        with open(caminho_imagem, "rb") as image_file: encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-        system_prompt = """Você é um sistema de visão de segurança CRÍTICA.
-        SUA MISSÃO PRIORITÁRIA: Identificar perigos físicos no ambiente e objetos perigosos.
-        INSTRUÇÕES DE DETECÇÃO:
-        1. PERIGOS AMBIENTAIS (Prioridade Máxima): Procure obsessivamente por: 'escadas', 'degraus', 'quinas' vivas, 'buracos', 'desníveis', 'fumaça', 'vapor', 'obstáculos'.
-        2. OBJETOS PERIGOSOS: Identifique 'faca', 'arma', 'fogo'.
-        3. OBJETOS PESSOAIS: Identifique celulares, chaves, óculos.
-        Retorne APENAS uma lista de objetos/perigos identificados, separados por vírgula, em Português."""
+        with open(image_path, "rb") as image_file: encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        system_prompt = """You are a CRITICAL safety vision system.
+        YOUR PRIORITY MISSION: Identify physical hazards in the environment and dangerous objects.
+        DETECTION INSTRUCTIONS:
+        1. ENVIRONMENTAL HAZARDS (Highest Priority): Obsessively look for: 'stairs', 'steps', 'sharp edges', 'holes', 'uneven surfaces', 'smoke', 'steam', 'obstacles'.
+        2. DANGEROUS OBJECTS: Identify 'knife', 'gun', 'fire'.
+        3. PERSONAL OBJECTS: Identify cell phones, keys, glasses.
+        Return ONLY a list of identified objects/hazards, separated by commas, in English."""
         response = openai_client.chat.completions.create(
             model=AZURE_OPENAI_DEPLOYMENT_NAME,
             messages=[{"role": "system", "content": system_prompt},
-                      {"role": "user", "content": [{"type": "text", "text": "Analise a imagem em busca de perigos ambientais e objetos."},
+                      {"role": "user", "content": [{"type": "text", "text": "Analyze the image for environmental hazards and objects."},
                                                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}]}],
             temperature=0.0, max_tokens=300
         )
         return response.choices[0].message.content
-    except Exception as e: print(f"❌ Erro GPT Vision: {e}"); return "Erro na análise visual."
+    except Exception as e: print(f"❌ GPT Vision Error: {e}"); return "Error in visual analysis."
 
-# --- RESUMO BILÍNGUE (Gera os dois textos) ---
-def gerar_resumo_inteligente_bilingue(dados_da_cena, status_alerta):
-    instrucao_pt, instrucao_en = "", ""
-    if status_alerta == "critico":
-        instrucao_pt = "ALERTA CRÍTICO: Um alarme já tocou. Comece com um aviso direto sobre o perigo detectado."
-        instrucao_en = "CRITICAL ALERT: An alarm has sounded. Start with a direct warning about the danger detected."
+# --- INTELLIGENT SUMMARY ---
+def generate_intelligent_summary(scene_data, alert_status):
+    en_instruction = ""
+    if alert_status == "critico":
+        en_instruction = "CRITICAL ALERT: An alarm has sounded. Start with a direct warning about the danger detected."
 
-    system_prompt = f"""Você é um assistente visual bilíngue (Português e Inglês).
-    Use 'DETECCAO_VISUAL_GPT_VISION' como base.
-    TAREFA: Gere o resumo DUAS VEZES. Primeiro em Português, depois em Inglês.
-    Separe os dois textos EXATAMENTE com a string "###SPLIT###".
-    Diretrizes PT: {instrucao_pt} Seja direto.
-    Diretrizes EN: {instrucao_en} Be direct.
+    system_prompt = f"""You are a visual assistant (English).
+    Use 'DETECCAO_VISUAL_GPT_VISION' as base.
+    TASK: Generate a concise and helpful summary in English.
+    EN Guidelines: {en_instruction} Be direct.
     """
-    user_prompt = f"""Dados da Cena: {dados_da_cena}. Gere o resumo PT ###SPLIT### EN."""
+    user_prompt = f"""Scene Data: {scene_data}. Generate the summary."""
     try:
         response = openai_client.chat.completions.create(
             model=AZURE_OPENAI_DEPLOYMENT_NAME, messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
             temperature=0.3, max_tokens=600
         )
-        texto_completo = response.choices[0].message.content
-        parts = texto_completo.split("###SPLIT###")
-        if len(parts) >= 2: return parts[0].strip(), parts[1].strip()
-        else: return texto_completo, "Error generating translation."
-    except: return "Erro no resumo.", "Error in summary."
+        return response.choices[0].message.content.strip()
+    except: return "Error in summary."
 
-# --- ROTAS WEB ---
+# --- WEB ROUTES ---
 @app.route('/')
 def index(): return render_template('index.html')
 
-@app.route('/historico')
-def historico():
-    conn = get_db_connection(); capturas = conn.execute('SELECT * FROM historico ORDER BY id DESC LIMIT 20').fetchall(); conn.close()
-    return render_template('memory.html', capturas=capturas)
+@app.route('/history')
+def history():
+    conn = get_db_connection(); captures = conn.execute('SELECT * FROM history ORDER BY id DESC LIMIT 20').fetchall(); conn.close()
+    return render_template('memory.html', capturas=captures)
 
-@app.route('/analisar', methods=['POST'])
-def analisar():
-    global CONTEXTO_ULTIMA_ANALISE
-    print(">>> INICIANDO ANÁLISE (PERIGOS + ÁUDIOS SEPARADOS) <<<")
-    limpar_imagens_antigas(); timestamp_agora = int(time.time()); data_hora_formated = datetime.now().strftime("%d/%m/%Y %H:%M")
-    nome_arq = f"captura_{timestamp_agora}.jpg"; caminho_img = os.path.join(PASTA_TEMP, nome_arq)
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    global LAST_ANALYSIS_CONTEXT
+    print(">>> STARTING ANALYSIS (HAZARDS + SEPARATE AUDIOS) <<<")
+    cleanup_old_images(); current_timestamp = int(time.time()); formatted_datetime = datetime.now().strftime("%d/%m/%Y %H:%M")
+    filename = f"capture_{current_timestamp}.jpg"; image_path = os.path.join(TEMP_FOLDER, filename)
 
-    # Captura ESP32
+    # ESP32 Capture
     try:
         response = requests.get(URL_ESP32, timeout=10)
         if response.status_code == 200 and len(response.content) > 0:
-            with open(caminho_img, "wb") as f: f.write(response.content); f.flush(); os.fsync(f.fileno()); time.sleep(0.2)
-        else: return jsonify({'status': 'erro', 'mensagem': 'Erro captura ESP32.'})
-    except Exception as e: return jsonify({'status': 'erro', 'mensagem': f'Falha ESP32: {e}'})
+            with open(image_path, "wb") as f: f.write(response.content); f.flush(); os.fsync(f.fileno()); time.sleep(0.2)
+        else: return jsonify({'status': 'error', 'message': 'ESP32 capture error.'})
+    except Exception as e: return jsonify({'status': 'error', 'message': f'ESP32 failure: {e}'})
 
-    # Execução IAs
-    print("ENVIANDO PARA GPT-4o VISION...")
-    deteccao_visual_gpt = analisar_imagem_com_gpt4o_vision(caminho_img)
+    # AI Execution
+    print("SENDING TO GPT-4o VISION...")
+    gpt_visual_detection = analyze_image_with_gpt4o_vision(image_path)
 
-    # Alerta Crítico
-    status_alerta = "nenhum"
-    if any(perigo in deteccao_visual_gpt.lower() for perigo in PERIGO_IMEDIATO_PT): status_alerta = "critico"
+    # Critical Alert
+    alert_status = "none"
+    if any(hazard in gpt_visual_detection.lower() for hazard in IMMEDIATE_DANGER_WORDS): alert_status = "critico"
 
-    dados_para_o_cerebro = {'DETECCAO_VISUAL_GPT_VISION': deteccao_visual_gpt, 'STATUS_ALERTA_ATUAL': status_alerta}
-    CONTEXTO_ULTIMA_ANALISE = dados_para_o_cerebro
+    brain_data = {'DETECCAO_VISUAL_GPT_VISION': gpt_visual_detection, 'STATUS_ALERTA_ATUAL': alert_status}
+    LAST_ANALYSIS_CONTEXT = brain_data
 
-    # --- GERAÇÃO DOS DOIS ÁUDIOS SEPARADOS ---
-    texto_pt, texto_en = gerar_resumo_inteligente_bilingue(dados_para_o_cerebro, status_alerta)
+    # --- AUDIO GENERATION ---
+    text_en = generate_intelligent_summary(brain_data, alert_status)
     
-    # Gera áudio PT
-    url_audio_pt = gerar_audio_neural_simples(texto_pt, VOZ_PT, CAMINHO_AUDIO_PT, NOME_ARQUIVO_AUDIO_PT)
-    # Gera áudio EN (com um pequeno delay para não sobrecarregar a API)
-    time.sleep(0.1)
-    url_audio_en = gerar_audio_neural_simples(texto_en, VOZ_EN, CAMINHO_AUDIO_EN, NOME_ARQUIVO_AUDIO_EN)
+    # Generate EN audio
+    en_audio_url = generate_simple_neural_audio(text_en, EN_VOICE, EN_AUDIO_PATH, EN_AUDIO_FILENAME)
     
-    # Salva no histórico (apenas PT)
+    # Save to history
     try:
-        lista_objs = [item.strip() for item in deteccao_visual_gpt.split(',') if item.strip()]
-        with get_db_connection() as conn: conn.execute('''INSERT INTO historico VALUES (NULL, ?, ?, ?, ?, ?, ?)''', (str(timestamp_agora), data_hora_formated, f"/static/{nome_arq}", texto_pt, json.dumps(lista_objs, ensure_ascii=False), 1 if status_alerta != "nenhum" else 0)); conn.commit()
+        object_list = [item.strip() for item in gpt_visual_detection.split(',') if item.strip()]
+        with get_db_connection() as conn: conn.execute('''INSERT INTO history VALUES (NULL, ?, ?, ?, ?, ?, ?)''', (str(current_timestamp), formatted_datetime, f"/static/{filename}", text_en, json.dumps(object_list, ensure_ascii=False), 1 if alert_status != "none" else 0)); conn.commit()
     except: pass
 
-    # RETORNA AS DUAS URLS SEPARADAS
+    # RETURNS DATA
     return jsonify({
-        'status': 'sucesso',
-        'yolo': deteccao_visual_gpt, 
-        'azure_desc': "Análise GPT-4o Vision (Ambiente+Objetos)", 
-        'status_alerta': status_alerta,
-        'imagem_url': f"/static/{nome_arq}",
-        'audio_url_pt': url_audio_pt, # URL 1
-        'audio_url_en': url_audio_en  # URL 2
+        'status': 'success',
+        'yolo': gpt_visual_detection, 
+        'azure_desc': "GPT-4o Vision Analysis (Environment+Objects)", 
+        'status_alerta': alert_status,
+        'image_url': f"/static/{filename}",
+        'audio_url_en': en_audio_url
     })
 
-@app.route('/perguntar', methods=['POST'])
-def perguntar():
-    global CONTEXTO_ULTIMA_ANALISE
-    if CONTEXTO_ULTIMA_ANALISE is None: return jsonify({'status': 'erro', 'resposta': 'Analise primeiro.'})
-    dados = request.get_json(); pergunta = dados.get('pergunta')
-    if not pergunta: return jsonify({'status': 'erro', 'resposta': 'Vazio.'})
+@app.route('/ask', methods=['POST'])
+def ask():
+    global LAST_ANALYSIS_CONTEXT
+    if LAST_ANALYSIS_CONTEXT is None: return jsonify({'status': 'error', 'response': 'Analyze first.'})
+    data = request.get_json(); question = data.get('question')
+    if not question: return jsonify({'status': 'error', 'response': 'Empty.'})
     
-    # Detecta idioma da pergunta
-    is_english = any(word in pergunta.lower() for word in ['what', 'where', 'how', 'is there', 'do you see', 'take', 'photo'])
-    lang_instruction = "Responda em Inglês." if is_english else "Responda em Português."
+    # Always respond in English for the final version
+    lang_instruction = "Respond in English."
     
-    # Gera resposta
+    # Generate response
     try:
         response = openai_client.chat.completions.create(
-            model=AZURE_OPENAI_DEPLOYMENT_NAME, messages=[{"role": "system", "content": f"Use 'DETECCAO_VISUAL_GPT_VISION'. {lang_instruction} Seja breve."}, {"role": "user", "content": f"Contexto: {CONTEXTO_ULTIMA_ANALISE}. Pergunta: {pergunta}"}],
+            model=AZURE_OPENAI_DEPLOYMENT_NAME, messages=[{"role": "system", "content": f"Use 'DETECCAO_VISUAL_GPT_VISION'. {lang_instruction} Be brief."}, {"role": "user", "content": f"Context: {LAST_ANALYSIS_CONTEXT}. Question: {question}"}],
             temperature=0.5, max_tokens=200
         )
-        resposta_texto = response.choices[0].message.content
-    except: resposta_texto = "Erro."; is_english = False;
+        response_text = response.choices[0].message.content
+    except: response_text = "Error.";
 
-    # Gera áudio da resposta com a voz certa
-    voice_to_use = VOZ_EN if is_english else VOZ_PT
-    url_audio_resp = gerar_audio_neural_simples(resposta_texto, voice_to_use, CAMINHO_AUDIO_RESPOSTA_COMPLETO, NOME_ARQUIVO_AUDIO_RESPOSTA)
+    # Generate audio response with English voice
+    response_audio_url = generate_simple_neural_audio(response_text, EN_VOICE, RESPONSE_AUDIO_PATH, RESPONSE_AUDIO_FILENAME)
 
-    return jsonify({'status': 'sucesso', 'resposta_texto': resposta_texto, 'audio_url': url_audio_resp})
+    return jsonify({'status': 'success', 'response_text': response_text, 'audio_url': response_audio_url})
 
-@app.route('/ler_texto', methods=['POST'])
-def ler_texto(): return jsonify({'status':'erro'})
+@app.route('/read_text', methods=['POST'])
+def read_text(): return jsonify({'status':'error'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

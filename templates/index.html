@@ -1,75 +1,323 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vision AI Pro - Pitch Final (Áudio Sequencial)</title>
+    <title>Vision AI Pro - Final Pitch</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* (ESTILOS CSS MANTIDOS - IGUAIS AO ANTERIOR) */
-        :root { --primary-blue: #0056b3; --secondary-cyan: #0dcaf0; --bg-light: #f4f7f6; --text-dark: #212529; --card-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        body { font-family: 'Roboto', sans-serif; background-color: var(--bg-light); color: var(--text-dark); padding-top: 30px; padding-bottom: 100px; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .btn-memory { background: white; color: var(--primary-blue); border: 2px solid var(--primary-blue); font-weight: 700; border-radius: 12px; padding: 12px 25px; text-decoration: none; transition: all 0.3s; display: flex; align-items: center; box-shadow: var(--card-shadow); }
-        .pro-container { background: #ffffff; border-radius: 16px; box-shadow: var(--card-shadow); padding: 30px; margin-bottom: 25px; border: 1px solid #e9ecef; }
-        .action-btn-group { display: flex; gap: 20px; justify-content: center; margin: 40px 0; flex-wrap: wrap; }
-        .btn-pro-primary { background-color: var(--primary-blue); color: white; font-size: 1.3em; font-weight: 600; padding: 18px 40px; border-radius: 12px; border: none; transition: all 0.3s; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0, 86, 179, 0.3); }
-        .btn-pro-secondary { background-color: #ffffff; color: var(--primary-blue); font-size: 1.3em; font-weight: 600; padding: 18px 40px; border-radius: 12px; border: 3px solid var(--primary-blue); transition: all 0.3s; display: flex; align-items: center; }
-        #voz-container { text-align: center; border-top: 4px solid var(--secondary-cyan); display: none; scroll-margin-top: 20px;}
-        #btn-microfone { font-size: 3.5em; width: 100px; height: 100px; border-radius: 50%; background: var(--primary-blue); color: white; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.3s; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; }
-        #btn-microfone.listening { background: #dc3545; animation: pulse-red 1.5s infinite; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
-        #status-voz { font-size: 1.4em; min-height: 1.5em; }
-        /* ESTILO DO ALERTA CRÍTICO (VERMELHO VIVO) */
-        .alerta-box { display: none; padding: 20px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; align-items: center; border-left: 6px solid; }
-        #alerta-critico { background-color: #ffe3e3; color: #c00; border-color: #f00; animation: pulse-alert 0.8s infinite; }
-        #alerta-semantico { background-color: #fff3cd; color: #664d03; border-color: #ffc107; }
-        #alerta-social { background-color: #ffe5d0; color: #9c4221; border-color: #fd7e14; }
-        #alerta-geral { background-color: #e2e3e5; color: #41464b; border-color: #adb5bd; }
-        @keyframes pulse-alert { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.02); opacity: 0.9; } 100% { transform: scale(1); opacity: 1; } }
-        audio { width: 100%; height: 50px; border-radius: 8px; margin-top: 20px; outline: none;}
-        .card-header-pro { background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; font-weight: 700; color: var(--primary-blue); }
-        .card-pro { border: 1px solid #e9ecef; box-shadow: var(--card-shadow); border-radius: 12px; }
-        #imagem-capturada { width: 100%; height: auto; object-fit: contain; max-height: 400px; }
+        :root {
+            --primary-blue: #0056b3;
+            --secondary-cyan: #0dcaf0;
+            --bg-light: #f4f7f6;
+            --text-dark: #212529;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding-top: 30px;
+            padding-bottom: 100px;
+        }
+
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .btn-memory {
+            background: white;
+            color: var(--primary-blue);
+            border: 2px solid var(--primary-blue);
+            font-weight: 700;
+            border-radius: 12px;
+            padding: 12px 25px;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+        }
+
+        .pro-container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid #e9ecef;
+        }
+
+        .action-btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn-pro-primary {
+            background-color: var(--primary-blue);
+            color: white;
+            font-size: 1.3em;
+            font-weight: 600;
+            padding: 18px 40px;
+            border-radius: 12px;
+            border: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 86, 179, 0.3);
+        }
+
+        .btn-pro-secondary {
+            background-color: #ffffff;
+            color: var(--primary-blue);
+            font-size: 1.3em;
+            font-weight: 600;
+            padding: 18px 40px;
+            border-radius: 12px;
+            border: 3px solid var(--primary-blue);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        #voz-container {
+            text-align: center;
+            border-top: 4px solid var(--secondary-cyan);
+            display: none;
+            scroll-margin-top: 20px;
+        }
+
+        #btn-microfone {
+            font-size: 3.5em;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #btn-microfone.listening {
+            background: #dc3545;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 20px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+
+        #status-voz {
+            font-size: 1.4em;
+            min-height: 1.5em;
+        }
+
+        .alerta-box {
+            display: none;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            align-items: center;
+            border-left: 6px solid;
+        }
+
+        #alerta-critico {
+            background-color: #ffe3e3;
+            color: #c00;
+            border-color: #f00;
+            animation: pulse-alert 0.8s infinite;
+        }
+
+        #alerta-semantico {
+            background-color: #fff3cd;
+            color: #664d03;
+            border-color: #ffc107;
+        }
+
+        #alerta-social {
+            background-color: #ffe5d0;
+            color: #9c4221;
+            border-color: #fd7e14;
+        }
+
+        #alerta-geral {
+            background-color: #e2e3e5;
+            color: #41464b;
+            border-color: #adb5bd;
+        }
+
+        @keyframes pulse-alert {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.02);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        audio {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            margin-top: 20px;
+            outline: none;
+        }
+
+        .card-header-pro {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .card-pro {
+            border: 1px solid #e9ecef;
+            box-shadow: var(--card-shadow);
+            border-radius: 12px;
+        }
+
+        #imagem-capturada {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            max-height: 400px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <div class="main-header"><div><h1 class="m-0"><i class="fas fa-shield-alt me-3"></i>Vision AI Pro</h1><p class="lead m-0">Assistência Visual Inteligente (GPT-4o)</p></div><a href="/historico" class="btn-memory"><i class="fas fa-history me-2"></i> VER MINHA MEMÓRIA</a></div>
-        
+        <div class="main-header">
+            <div>
+                <h1 class="m-0"><i class="fas fa-shield-alt me-3"></i>Vision AI Pro</h1>
+                <p class="lead m-0">Intelligent Visual Assistance (GPT-4o)</p>
+            </div>
+            <a href="/history" class="btn-memory"><i class="fas fa-history me-2"></i> VIEW MY MEMORY</a>
+        </div>
+
         <div id="alertas-container">
-            <div id="alerta-critico" class="alerta-box"><i class="fas fa-hand-paper"></i> <div>PARE! PERIGO CRÍTICO (Ambiente ou Objeto)!</div></div>
-            <div id="alerta-semantico" class="alerta-box"><i class="fas fa-fire-alt"></i> <div>Atenção: Item de risco identificado.</div></div>
-            <div id="alerta-social" class="alerta-box"><i class="fas fa-user-ninja"></i> <div>Cautela Social: Possível hostilidade.</div></div>
-            <div id="alerta-geral" class="alerta-box"><i class="fas fa-exclamation-triangle"></i> <div>Atenção: Risco no ambiente.</div></div>
+            <div id="alerta-critico" class="alerta-box"><i class="fas fa-hand-paper"></i>
+                <div>STOP! CRITICAL DANGER (Environment or Object)!</div>
+            </div>
+            <div id="alerta-semantico" class="alerta-box"><i class="fas fa-fire-alt"></i>
+                <div>Warning: Risk item identified.</div>
+            </div>
+            <div id="alerta-social" class="alerta-box"><i class="fas fa-user-ninja"></i>
+                <div>Social Caution: Possible hostility.</div>
+            </div>
+            <div id="alerta-geral" class="alerta-box"><i class="fas fa-exclamation-triangle"></i>
+                <div>Warning: Environment risk.</div>
+            </div>
         </div>
 
-        <div class="action-btn-group"><button id="btn-analisar" class="btn-pro-primary" aria-label="Analisar cena completa"><i class="fas fa-camera me-3" aria-hidden="true"></i> ANALISAR CENA COMPLETA</button><button id="btn-ler-texto" class="btn-pro-secondary" aria-label="Ler documento focado"><i class="fas fa-book-open me-3" aria-hidden="true"></i> LER DOCUMENTO FOCADO</button></div>
-        <div id="loading" class="text-center mt-4" style="display: none;" role="status" aria-live="polite"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div><div class="mt-3 fs-5 text-primary fw-bold" id="loading-text">Processando inteligência artificial...</div></div>
-
-        <div id="resumo-falado-box" class="pro-container" style="display: none; border-left: 4px solid var(--secondary-cyan);">
-            <h5 class="text-primary mb-3"><i class="fas fa-headphones-alt me-2"></i> Resumo Bilíngue (PT -> EN)</h5>
-            <audio id="player-audio-pt" controls autoplay></audio>
-            <audio id="player-audio-en" style="display: none;"></audio>
+        <div class="action-btn-group">
+            <button id="btn-analisar" class="btn-pro-primary" aria-label="Analyze full scene">
+                <i class="fas fa-camera me-3" aria-hidden="true"></i> ANALYZE FULL SCENE
+            </button>
+            <button id="btn-ler-texto" class="btn-pro-secondary" aria-label="Read focused document">
+                <i class="fas fa-book-open me-3" aria-hidden="true"></i> READ FOCUSED DOCUMENT
+            </button>
         </div>
-        <audio id="player-cue" src="/static/pode_falar.wav" style="display: none;"></audio>
-        <audio id="player-alarm" src="/static/alarme.wav" style="display: none;"></audio>
+
+        <div id="loading" class="text-center mt-4" style="display: none;" role="status" aria-live="polite">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+            <div class="mt-3 fs-5 text-primary fw-bold" id="loading-text">Processing Artificial Intelligence...</div>
+        </div>
+
+        <div id="resumo-falado-box" class="pro-container"
+            style="display: none; border-left: 4px solid var(--secondary-cyan);">
+            <h5 class="text-primary mb-3"><i class="fas fa-headphones-alt me-2"></i> Voice Summary</h5>
+            <audio id="player-audio-en" controls autoplay></audio>
+        </div>
+
+        <audio id="player-cue" src="/static/can_speak.wav" style="display: none;"></audio>
+        <audio id="player-alarm" src="/static/alarm.wav" style="display: none;"></audio>
         <audio id="player-audio-chat" style="display: none;"></audio>
 
         <div id="voz-container" class="pro-container">
-            <h3 class="mb-4" style="color: var(--primary-blue);"><i class="fas fa-microphone-alt me-2"></i> Assistente de Voz Bilíngue</h3>
-            <p class="text-muted mb-4">Diga <strong>"Tirar foto" / "Take photo"</strong> ou faça uma pergunta após o bipe.</p>
-            <button id="btn-microfone" aria-label="Status do microfone"><i class="fas fa-microphone" aria-hidden="true"></i></button>
-            <div id="status-voz" class="mt-3 fw-bold" aria-live="assertive">Aguardando ativação...</div>
+            <h3 class="mb-4" style="color: var(--primary-blue);"><i class="fas fa-microphone-alt me-2"></i> Voice
+                Assistant</h3>
+            <p class="text-muted mb-4">Say <strong>"Take photo"</strong> or ask a question after the beep.</p>
+            <button id="btn-microfone" aria-label="Microphone status"><i class="fas fa-microphone"
+                    aria-hidden="true"></i></button>
+            <div id="status-voz" class="mt-3 fw-bold" aria-live="assertive">Waiting for activation...</div>
         </div>
 
-        <div id="debug-area" class="mt-5 pt-4 border-top" aria-hidden="true"><h5 class="text-muted text-center mb-4 text-uppercase ls-1"><i class="fas fa-server me-2"></i> Dados do Sistema</h5><div class="row g-4"><div class="col-lg-6"><div class="card card-pro"><div class="card-body p-2 text-center bg-light" style="min-height: 300px;"><img id="imagem-capturada" src="" alt="Captura" style="display: none;"><div id="placeholder-img"><i class="fas fa-image fa-4x mb-3 opacity-25"></i><br>Aguardando...</div></div></div></div><div class="col-lg-6"><div class="card card-pro mb-3"><div class="card-body bg-light"><small>Descrição:</small><strong id="res-azure-desc">-</strong></div></div><div class="row g-2"><div class="col-6"><div class="card card-pro"><div class="card-body p-3 bg-light"><small>Objetos/Ambiente (GPT Vision):</small><strong id="res-yolo">-</strong></div></div></div><div class="col-6"><div class="card card-pro"><div class="card-body p-3 bg-light"><small>OCR:</small><strong id="res-azure-ocr">-</strong></div></div></div></div></div></div></div>
+        <div id="debug-area" class="mt-5 pt-4 border-top" aria-hidden="true">
+            <h5 class="text-muted text-center mb-4 text-uppercase ls-1"><i class="fas fa-server me-2"></i> System Data
+            </h5>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card card-pro">
+                        <div class="card-body p-2 text-center bg-light" style="min-height: 300px;">
+                            <img id="imagem-capturada" src="" alt="Capture" style="display: none;">
+                            <div id="placeholder-img"><i class="fas fa-image fa-4x mb-3 opacity-25"></i><br>Waiting...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card card-pro mb-3">
+                        <div class="card-body bg-light">
+                            <small>Description:</small><strong id="res-azure-desc">-</strong>
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="card card-pro">
+                                <div class="card-body p-3 bg-light">
+                                    <small>Objects/Environment:</small><strong id="res-yolo">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card card-pro">
+                                <div class="card-body p-3 bg-light">
+                                    <small>OCR:</small><strong id="res-azure-ocr">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- ELEMENTOS DOM ---
         const btnAnalisar = document.getElementById('btn-analisar');
         const btnLerTexto = document.getElementById('btn-ler-texto');
         const loadingDiv = document.getElementById('loading');
@@ -77,18 +325,15 @@
         const imgTag = document.getElementById('imagem-capturada');
         const placeholderImg = document.getElementById('placeholder-img');
         const resumoBox = document.getElementById('resumo-falado-box');
-        
-        // NOVOS PLAYERS SEPARADOS
-        const playerAudioPT = document.getElementById('player-audio-pt');
+
         const playerAudioEN = document.getElementById('player-audio-en');
-        
-        const playerCue = document.getElementById('player-cue'); // BIP CONVERSA
-        const playerAlarm = document.getElementById('player-alarm'); // ALARME CRÍTICO
+        const playerCue = document.getElementById('player-cue');
+        const playerAlarm = document.getElementById('player-alarm');
         const vozContainer = document.getElementById('voz-container');
         const btnMicrofone = document.getElementById('btn-microfone');
         const statusVoz = document.getElementById('status-voz');
         const playerAudioChat = document.getElementById('player-audio-chat');
-        
+
         const alertas = {
             'critico': document.getElementById('alerta-critico'),
             'semantico': document.getElementById('alerta-semantico'),
@@ -96,126 +341,108 @@
             'geral': document.getElementById('alerta-geral')
         };
 
-        // --- CONFIGURAÇÃO DE VOZ HANDS-FREE (BILÍNGUE) ---
         let recognition = null; let isListening = false;
         if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition(); recognition.lang = 'pt-BR'; recognition.continuous = false; recognition.interimResults = false;
-            recognition.onstart = () => { isListening = true; statusVoz.innerHTML = "<span class='text-danger'>Ouvindo... (PT/EN)</span>"; btnMicrofone.classList.add('listening'); };
-            
-            recognition.onresult = async (event) => { 
-                isListening = false; 
+            recognition = new webkitSpeechRecognition(); recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = false;
+            recognition.onstart = () => { isListening = true; statusVoz.innerHTML = "<span class='text-danger'>Listening...</span>"; btnMicrofone.classList.add('listening'); };
+
+            recognition.onresult = async (event) => {
+                isListening = false;
                 const txt = event.results[0][0].transcript.toLowerCase().trim();
-                console.log("Comando ouvido:", txt);
-                
-                const comandosPT = ["tirar próxima foto", "tirar foto", "analisar de novo", "analisar ambiente", "verificar item"];
-                const comandosEN = ["take photo", "take a picture", "analyze again", "check environment", "scan items"];
-                
-                if (comandosPT.some(cmd => txt.includes(cmd)) || comandosEN.some(cmd => txt.includes(cmd))) {
-                    statusVoz.innerHTML = "<span class='text-primary fw-bold'>Entendido. Iniciando nova análise...</span>";
+                console.log("Command heard:", txt);
+
+                const commands = ["take photo", "take a picture", "analyze again", "check environment", "scan items"];
+
+                if (commands.some(cmd => txt.includes(cmd))) {
+                    statusVoz.innerHTML = "<span class='text-primary fw-bold'>Understood. Starting analysis...</span>";
                     resetMicVisual(); setTimeout(() => { btnAnalisar.click(); }, 1000);
                 } else {
-                    statusVoz.innerHTML = `Entendi: "<em>${txt}</em>". Perguntando...`; resetMicVisual(); await enviarPerguntaAoBackend(txt); 
+                    statusVoz.innerHTML = `Understood: "<em>${txt}</em>". Asking...`; resetMicVisual(); await sendQuestionToBackend(txt);
                 }
             };
-            recognition.onerror = (e) => { isListening = false; console.error(e.error); resetMicVisual(); statusVoz.innerText = "Não entendi. Aguardando bip..."; };
+            recognition.onerror = (e) => { isListening = false; console.error(e.error); resetMicVisual(); statusVoz.innerText = "Didn't understand. Waiting for beep..."; };
             recognition.onend = () => { if (isListening) { resetMicVisual(); isListening = false; } };
-        } else { statusVoz.innerHTML = "<span class='text-danger'>Navegador incompatível com voz.</span>"; btnMicrofone.disabled = true; }
+        } else { statusVoz.innerHTML = "<span class='text-danger'>Browser incompatible with voice.</span>"; btnMicrofone.disabled = true; }
+
         function resetMicVisual() { btnMicrofone.classList.remove('listening'); }
 
-        // --- FUNÇÕES DE INTERFACE ---
         function resetInterface(textoLoading) {
             btnAnalisar.disabled = true; btnLerTexto.disabled = true;
             loadingText.innerText = textoLoading; loadingDiv.style.display = 'block';
-            vozContainer.style.display = 'none'; 
+            vozContainer.style.display = 'none';
             Object.values(alertas).forEach(a => a && (a.style.display = 'none'));
-            // Para todos os players
-            playerAudioPT.pause(); playerAudioEN.pause(); playerAudioChat.pause(); playerCue.pause(); playerAlarm.pause();
-            statusVoz.innerText = "Aguardando..."; imgTag.style.display = 'none'; placeholderImg.style.display = 'block';
+            playerAudioEN.pause(); playerAudioChat.pause(); playerCue.pause(); playerAlarm.pause();
+            statusVoz.innerText = "Waiting..."; imgTag.style.display = 'none'; placeholderImg.style.display = 'block';
         }
-        function finalizaInterface() { loadingDiv.style.display = 'none'; btnAnalisar.disabled = false; btnLerTexto.disabled = false; }
-        function atualizarInterfaceVisual(data) {
-            imgTag.onload = () => { imgTag.style.display = 'block'; placeholderImg.style.display = 'none'; }; imgTag.src = data.imagem_url;
+
+        function finalizeInterface() { loadingDiv.style.display = 'none'; btnAnalisar.disabled = false; btnLerTexto.disabled = false; }
+
+        function updateVisualInterface(data) {
+            imgTag.onload = () => { imgTag.style.display = 'block'; placeholderImg.style.display = 'none'; }; imgTag.src = data.image_url;
             document.getElementById('res-yolo').innerText = data.yolo || '-'; document.getElementById('res-azure-desc').innerText = data.azure_desc || '-'; document.getElementById('res-azure-ocr').innerText = data.azure_ocr || '-';
         }
 
-        // --- FUNÇÃO CENTRAL: TOCA BIP E ABRE MICROFONE ---
-        function tocarCueEAtivarMicrofone() {
+        function playCueAndActivateMic() {
             if (!recognition) return;
-            vozContainer.style.display = 'block'; statusVoz.innerText = "Preparando microfone...";
+            vozContainer.style.display = 'block'; statusVoz.innerText = "Preparing microphone...";
             playerCue.load();
             playerCue.play().then(() => {
                 playerCue.onended = () => {
-                    try { statusVoz.innerText = "Ativando..."; recognition.start(); } catch (e) { console.error("Erro mic:", e); statusVoz.innerText = "Erro no microfone."; }
+                    try { statusVoz.innerText = "Listening..."; recognition.start(); } catch (e) { console.error("Mic error:", e); statusVoz.innerText = "Microphone error."; }
                 };
-            }).catch(e => { console.error("Erro cue:", e); recognition.start(); });
+            }).catch(e => { console.error("Cue error:", e); recognition.start(); });
         }
 
-        // --- NOVA LÓGICA DE SEQUÊNCIA DE ÁUDIO (A CORREÇÃO PRINCIPAL) ---
-        function iniciarFluxoDeAudioSequencial(urlPT, urlEN, isCritico) {
+        function startAudioSequence(urlEN, isCritico) {
             resumoBox.style.display = 'block';
-            
-            // Configura as fontes
-            playerAudioPT.src = urlPT;
             playerAudioEN.src = urlEN;
+            playerAudioEN.onended = () => { playCueAndActivateMic(); };
 
-            // Define a cadeia de eventos (de trás para frente)
-            
-            // 3. Quando EN acaba -> Toca Bip e Abre Mic
-            playerAudioEN.onended = () => { tocarCueEAtivarMicrofone(); };
-            
-            // 2. Quando PT acaba -> Toca EN
-            playerAudioPT.onended = () => { 
-                if(urlEN) { playerAudioEN.play().catch(e => tocarCueEAtivarMicrofone()); }
-                else { tocarCueEAtivarMicrofone(); }
-            };
-
-            // 1. Início do fluxo
             if (isCritico) {
-                console.log("Alerta crítico! Tocando alarme...");
+                console.log("Critical alert! Sounding alarm...");
                 playerAlarm.load();
-                // Toca alarme, quando acaba, toca PT
                 playerAlarm.play().then(() => {
-                    playerAlarm.onended = () => { playerAudioPT.play(); }
-                }).catch(() => { playerAudioPT.play(); });
+                    playerAlarm.onended = () => { playerAudioEN.play(); }
+                }).catch(() => { playerAudioEN.play(); });
             } else {
-                // Toca PT direto
-                playerAudioPT.play().catch(e => console.log("Autoplay bloqueado:", e));
+                playerAudioEN.play().catch(e => console.log("Autoplay blocked:", e));
             }
         }
 
-        // --- EVENTOS ---
         btnAnalisar.addEventListener('click', async () => {
-            resetInterface("Analisando ambiente e objetos (Bilíngue)...");
-            try { const response = await fetch('/analisar', { method: 'POST' }); const data = await response.json();
-                if (data.status === 'sucesso') { 
-                    atualizarInterfaceVisual(data); 
+            resetInterface("Analyzing environment and objects...");
+            try {
+                const response = await fetch('/analyze', { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    updateVisualInterface(data);
                     const isCritico = data.status_alerta === 'critico';
-                    if (data.status_alerta !== 'nenhum' && alertas[data.status_alerta]) {
+                    if (data.status_alerta !== 'none' && alertas[data.status_alerta]) {
                         alertas[data.status_alerta].style.display = 'flex';
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
-                    // Inicia a sequência com as DUAS URLs
-                    iniciarFluxoDeAudioSequencial(data.audio_url_pt, data.audio_url_en, isCritico);
-                } else { alert('Erro: ' + data.mensagem); }
-            } catch (error) { console.error(error); alert('Erro de comunicação.'); } finally { finalizaInterface(); }
+                    startAudioSequence(data.audio_url_en, isCritico);
+                } else { alert('Error: ' + data.message); }
+            } catch (error) { console.error(error); alert('Communication error.'); } finally { finalizeInterface(); }
         });
 
-        btnLerTexto.addEventListener('click', async () => { /* Lógica de leitura mantida (pode usar o player PT) */ });
-        btnMicrofone.addEventListener('click', () => { if (recognition && !isListening) tocarCueEAtivarMicrofone(); });
+        btnLerTexto.addEventListener('click', async () => { /* Read logic maintained */ });
+        btnMicrofone.addEventListener('click', () => { if (recognition && !isListening) playCueAndActivateMic(); });
 
-        // --- ENVIO DE PERGUNTA E LOOP DE CONVERSA ---
-        async function enviarPerguntaAoBackend(txt) {
-            try { const res = await fetch('/perguntar', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pergunta: txt }) }); const data = await res.json();
-                if (data.status === 'sucesso' && data.audio_url) { 
-                    statusVoz.innerText = "Respondendo..."; playerAudioChat.src = data.audio_url; playerAudioChat.play();
-                    // O GRANDE LOOP: Quando a resposta acaba, REINICIA o ciclo (bip -> mic)
-                    playerAudioChat.onended = () => { 
-                        statusVoz.innerText = "Reiniciando escuta...";
-                        setTimeout(() => { tocarCueEAtivarMicrofone(); }, 1000); 
+        async function sendQuestionToBackend(txt) {
+            try {
+                const res = await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: txt }) });
+                const data = await res.json();
+                if (data.status === 'success' && data.audio_url) {
+                    statusVoz.innerText = "Responding..."; playerAudioChat.src = data.audio_url; playerAudioChat.play();
+                    playerAudioChat.onended = () => {
+                        statusVoz.innerText = "Restarting listening...";
+                        setTimeout(() => { playCueAndActivateMic(); }, 1000);
                     };
-                } else { statusVoz.innerText = "Erro na resposta."; }
-            } catch (e) { statusVoz.innerText = "Erro de comunicação."; }
+                } else { statusVoz.innerText = "Error in response."; }
+            } catch (e) { statusVoz.innerText = "Communication error."; }
         }
     </script>
 </body>
+
 </html>
