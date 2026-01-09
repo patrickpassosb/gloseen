@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Main application for Vision AI Pro
+# Main application for Gloseen
 from flask import Flask, render_template, jsonify, request
 import cv2
 import numpy as np
@@ -72,7 +72,7 @@ IMMEDIATE_DANGER_WORDS = [
 
 LAST_ANALYSIS_CONTEXT = None
 
-print("--- INITIALIZING VISION AI PRO (EN) ---")
+print("--- INITIALIZING GLOSEEN (EN) ---")
 try:
     computervision_client = ComputerVisionClient(AZURE_VISION_ENDPOINT, CognitiveServicesCredentials(AZURE_VISION_KEY))
     face_client = FaceClient(AZURE_FACE_ENDPOINT, CognitiveServicesCredentials(AZURE_FACE_KEY))

@@ -1,10 +1,11 @@
-# 👁️ Blindur - Vision AI Pro
+# 👁️ Gloseen
 
-Blindur is an advanced assistive technology project designed for the ImagineCup. It combines edge computing (ESP32-CAM) with cutting-edge Cloud AI (Azure OpenAI & Speech) to provide real-time environmental awareness and hazard detection for people with visual impairments.
+Gloseen is an advanced assistive technology project designed for the ImagineCup. It combines edge computing (ESP32-CAM) with cutting-edge Cloud AI (Azure OpenAI & Speech) to provide real-time environmental awareness and hazard detection for people with visual impairments.
 
 ## 🏗️ Architecture
 
 ```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Inter, sans-serif'}}}%%
 graph TD
     User([User]) <--> Frontend[Web Interface - HTML/JS]
     Frontend <--> Backend[Flask Backend - Python]
