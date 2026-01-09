@@ -5,8 +5,8 @@
 // ========================================
 // WI-FI DATA (ALREADY CONFIGURED)
 // ========================================
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char* ssid = "LEONARDO";
+const char* password = "CucoTico";
 // ========================================
 
 WebServer server(80);
