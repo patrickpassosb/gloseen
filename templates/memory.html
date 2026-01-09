@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico - Vision AI Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #f4f7f6; color: #212529; padding-top: 20px; padding-bottom: 60px; }
+        .header-pro { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #e9ecef; padding-bottom: 20px; }
+        .btn-back { background: white; color: #0056b3; border: 2px solid #0056b3; font-weight: 600; border-radius: 12px; padding: 10px 25px; text-decoration: none; transition: all 0.3s; display: flex; align-items: center; }
+        .btn-back:hover { background: #e9f2ff; transform: translateY(-2px); }
+        
+        .timeline { list-style: none; padding: 0; position: relative; max-width: 800px; margin: 0 auto; }
+        .timeline:before { content: ''; position: absolute; top: 0; bottom: 0; left: 24px; width: 4px; background: #e9ecef; }
+        .timeline-item { margin-bottom: 40px; position: relative; padding-left: 70px; }
+        .timeline-icon { position: absolute; left: 0; top: 0; width: 52px; height: 52px; border-radius: 50%; background: #0056b3; color: white; display: flex; justify-content: center; align-items: center; font-size: 1.4em; z-index: 2; border: 4px solid #f4f7f6; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .timeline-icon.danger { background: #dc3545; }
+        
+        .timeline-content { background: white; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 30px; border: 1px solid #e9ecef; }
+        .timestamp { color: #6c757d; font-weight: 500; font-size: 0.95em; margin-bottom: 20px; display: block; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px;}
+        .resumo-gpt { font-size: 1.1em; line-height: 1.6; color: #212529; background: #f8f9fa; padding: 15px; border-radius: 12px; border-left: 4px solid #0dcaf0; }
+        .img-thumbnail-history { width: 100%; height: auto; border-radius: 12px; margin-top: 25px; border: 1px solid #dee2e6; max-height: 300px; object-fit: contain; background: #f0f2f5; padding: 5px; }
+        .badge-obj { background: #e9f2ff; color: #0056b3; margin-right: 8px; margin-bottom: 8px; display: inline-block; padding: 8px 15px; border-radius: 30px; font-weight: 500; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-pro">
+            <a href="/" class="btn-back"><i class="fas fa-arrow-left me-2"></i> Voltar</a>
+            <h2 class="m-0 text-primary fw-bold"><i class="fas fa-history me-3"></i>Memória Visual</h2>
+        </div>
+
+        <ul class="timeline">
+            {% for captura in capturas %}
+            <li class="timeline-item">
+                <div class="timeline-icon {% if captura.tem_perigo %}danger{% endif %}">
+                    <i class="fas {% if captura.tem_perigo %}fa-exclamation-triangle{% else %}fa-camera{% endif %}"></i>
+                </div>
+                <div class="timeline-content">
+                    <span class="timestamp"><i class="far fa-clock me-2"></i>{{ captura.data_hora_formated }}</span>
+                    
+                    <h5 class="fw-bold" style="color: #0056b3;">Resumo do Assistente:</h5>
+                    <p class="resumo-gpt">{{ captura.resumo_gpt }}</p>
+
+                    <div class="mt-4 mb-3">
+                        <small class="text-muted d-block mb-2 fw-bold text-uppercase ls-1">Objetos Detectados na Cena:</small>
+                        
+                        {# Usa o filtro personalizado definido no app.py #}
+                        {% set objetos_lista = captura.objetos_json|from_json %}
+                        
+                        {% if objetos_lista and objetos_lista|length > 0 %}
+                            {% for obj in objetos_lista %}
+                                <span class="badge-obj">{{ obj }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted fst-italic"><i class="fas fa-eye-slash me-2"></i>Nenhum objeto identificado especificamente.</span>
+                        {% endif %}
+                    </div>
+
+                    <img src="{{ captura.imagem_path }}" alt="Captura histórica" class="img-thumbnail-history" loading="lazy">
+                </div>
+            </li>
+            {% else %}
+            <li class="text-center text-muted py-5">
+                <div class="mb-4"><i class="fas fa-folder-open fa-4x opacity-25"></i></div>
+                <h4>Nenhuma memória encontrada.</h4>
+                <p class="lead fs-6">Faça uma análise na tela inicial para começar a construir seu histórico.</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

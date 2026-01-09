@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Mobile/Weights (Large files)
+*.pt
+
+# Data
+vision_memory.db
+
+# Generated Assets
+static/captura_*.jpg
+static/processada_*.jpg
+static/audio_*.wav
+static/pode_falar.wav
+static/alarme.wav
+static/audio_resposta.wav
+static/tts_output.mp3
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# User generated
+teste.jpg
+foto_atual.jpg
